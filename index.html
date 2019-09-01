@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>SPEEDTEST LITE C2S</title>
+    <style type="text/css">
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            border: none;
+            text-align: center;
+            background-color:#141526;
+            color: #FFF;
+			font-family: 微软雅黑;
+        }
+
+        div.test {
+            display: inline-block;
+            margin: 1em;
+            font-size: 2vw;
+            min-width: 10vw;
+            text-align: center;
+        }
+
+        div.testName,
+        div.meterUnit {
+            font-size: 1em;
+        }
+
+        div.meter {
+            font-size: 1.5em;
+            line-height: 2em;
+            height: 2em !important;
+        }
+
+        .flash {
+            animation: flash 0.6s linear infinite;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        a {
+            display: inline-block;
+            border: 0.15em solid #FFF;
+            padding: 0.3em 0.5em;
+            margin: 0.6em;
+            color: #FFF;
+            text-decoration: none;
+        }
+
+        #ip {
+            margin: 0.8em 0;
+            font-size: 1.2em;
+        }
+
+        @media all and (max-width: 50em) {
+            div.test {
+                font-size: 2em;
+            }
+        }
+      .lite-text{display:inline-block;background-color:#fff38e;color:#0b0c1b;border-radius:.2em;padding:.2em .2em .2em;margin-left:.4em;font-weight:700;line-height:1;font-size:11px;font-size:1.1rem;position:relative;top:-.4em}
+    </style>
+    <script type="text/javascript">
+        var w = null
+        function runTest() {
+            document.getElementById('startBtn').style.display = 'none'
+            document.getElementById('testArea').style.display = ''
+            document.getElementById('abortBtn').style.display = ''
+            document.getElementById('ip').style.display = ''
+            document.getElementById('intro').innerHTML = "当前客户端IP："
+            w = new Worker('./speedtest_worker.min.js')
+            var interval = setInterval(function () { w.postMessage('status') }, 100)
+            w.onmessage = function (event) {
+                var data = event.data.split(';')
+                var status = Number(data[0])
+                var dl = document.getElementById('download')
+                var ul = document.getElementById('upload')
+                var ping = document.getElementById('ping')
+                var ip = document.getElementById('ip')
+                var jitter = document.getElementById('jitter')
+                dl.className = status === 1 ? 'flash' : ''
+                ping.className = status === 2 ? 'flash' : ''
+                jitter.className = ul.className = status === 3 ? 'flash' : ''
+                if (status === 4) {
+                    clearInterval(interval)
+                    document.getElementById('abortBtn').style.display = 'none'
+                    document.getElementById('startBtn').style.display = ''
+                    document.getElementById('startBtn').innerHTML = "重新测试"
+                    document.getElementById('intro').innerHTML = "当前客户端IP："
+                    w = null
+                }
+                if (status === 5) {
+                    clearInterval(interval)
+                    document.getElementById('testArea').style.display = 'none'
+                    document.getElementById('abortBtn').style.display = 'none'
+                    document.getElementById('startBtn').style.display = ''
+                    document.getElementById('startBtn').innerHTML = "开始测试"
+                    document.getElementById('intro').innerHTML = "客户端对服务器网络测试"
+                    document.getElementById('ip').style.display = 'none'
+                }
+                dl.textContent = data[1]
+                ul.textContent = data[2]
+                ping.textContent = data[3]
+                jitter.textContent = data[5]
+                ip.textContent = data[4]
+            }
+            w.postMessage('start')
+        }
+        function abortTest() {
+            if (w) w.postMessage('abort')
+        }
+    </script>
+</head>
+
+<body>
+    <br />
+    <h1>RUVDS<div class="lite-text">Speed Test</div></h1>
+  <div id="intro">本地到RUVDS机房的网速</div>
+  <div id="ip" style="display:none">None</div><br />
+  <a href="javascript:runTest()" id="startBtn">开始测试</a>
+  <a href="javascript:abortTest()" style="display:none" id="abortBtn">取消测试</a>
+    <div id="testArea" style="display:none">
+        
+        <div class="test">
+            <div class="testName">下载速度</div>
+            <div class="meter">&nbsp;<span id="download"></span>&nbsp;</div>
+            <div class="meterUnit">Mbit/s</div>
+        </div>
+        <div class="test">
+            <div class="testName">上传速度</div>
+            <div class="meter">&nbsp;<span id="upload"></span>&nbsp;</div>
+            <div class="meterUnit">Mbit/s</div>
+        </div>
+        <div class="test">
+            <div class="testName">平均延迟</div>
+            <div class="meter">&nbsp;<span id="ping"></span>&nbsp;</div>
+            <div class="meterUnit">ms</div>
+        </div>
+        <div class="test">
+            <div class="testName">延迟波动</div>
+            <div class="meter">&nbsp;<span id="jitter"></span>&nbsp;</div>
+            <div class="meterUnit">ms</div>
+        </div>
+        <br/>
+        
+    </div>
+<!--
+Localization and optimization by Jonvi
+Thanks:https://github.com/adolfintel/speedtest
+-->
+</body>
+</html>
